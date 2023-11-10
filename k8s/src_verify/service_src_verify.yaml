@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: adontsov-servic-src-verify
+spec:
+  selector:
+    app: adontsov-shift-verify
+  ports:
+  - port: 24204
+    targetPort: 24204

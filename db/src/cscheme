@@ -1,0 +1,30 @@
+Table User {
+  id bigserial [primary key]
+  card_number varchar(20) UNIQUE
+  hashed_password varchar(100)
+  limit DECIMAL
+  is_active boolean
+  is_verified boolean
+  _balance DECIMAL
+}
+
+
+Table CommonLog {
+  id bigserial [primary key]
+  card_number varchar(20)
+  before varchar(300)
+  after varchar(300)
+  changes varchar(300)
+  user_id bigint [ref: > User.id]
+  _datetime_utc timestamp
+}
+
+Table BalanceLog {
+  id bigserial [primary key]
+  card_number varchar(20)  
+  before DECIMAL
+  after DECIMAL
+  changes DECIMAL
+  user_id bigint [ref: > User.id]
+  _datetime_utc timestamp
+}

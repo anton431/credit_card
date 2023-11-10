@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "src-verify.fullname" . }}
+  labels:
+    {{- include "src-verify.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "src-verify.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "src-verify.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.livenessPath }}
+              port: {{ .Values.app.servicePort }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.readinessPath }}
+              port: {{ .Values.app.servicePort }}
+          env:
+            - name: HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: host
+                  name: {{ .Release.Name }}
+            - name: PORT_SRC
+              valueFrom:
+                configMapKeyRef:
+                  key: portsrc
+                  name: {{ .Release.Name }}
+            - name: KAFKA_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_host
+                  name: adontsov-secret-src-verify
+            - name: KAFKA_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_port
+                  name: adontsov-secret-src-verify
+            - name: SRC_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: src_host
+                  name: adontsov-secret-src-verify
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

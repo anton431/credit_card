@@ -1,0 +1,41 @@
+default:
+  image: acidrain/python-poetry:3.10
+  before_script:
+    - apt-get update 
+    - apt install curl -y
+    - curl -sSL https://install.python-poetry.org | python -
+    - export PATH="/root/.local/bin:$PATH"
+    - apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+    - poetry config virtualenvs.in-project false
+    - poetry config virtualenvs.create false
+    - poetry install
+
+stages:
+  - tests
+  - linter
+
+Linter:
+  stage: linter
+  script:
+    - pwd
+    - flake8 src/app
+    - flake8 src_auth/app
+    - flake8 src_verify/app/
+
+Tests:
+  stage: tests
+  script:
+    - cd
+    - apt-get install -y wget default-jre
+    - wget "https://downloads.apache.org/kafka/3.5.1/kafka_2.12-3.5.1.tgz"
+    - tar -xzf ~/kafka_2.12-3.5.1.tgz
+    - mv kafka_2.12-3.5.1 kafka
+    - cd kafka/config/
+    - sed -i 's/#listeners=PLAINTEXT:\/\/:9092/listeners=PLAINTEXT:\/\/:24304/g' server.properties 
+    - cd ~/kafka/
+    - bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+    - bin/kafka-server-start.sh -daemon config/server.properties
+    - bin/kafka-topics.sh --create --topic verify --bootstrap-server localhost:24304
+    - bin/kafka-topics.sh --create --topic verify_response --bootstrap-server localhost:24304
+    - cd /builds/shift-python/y2023/homeworks/doncov-a/week5-task2
+    - python -m src.app.service & python -m src_verify.app.service & pytest --cov src/tests

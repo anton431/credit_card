@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "src.fullname" . }}
+  labels:
+    {{- include "src.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "src.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "src.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.livenessPath }}
+              port: {{ .Values.app.servicePort }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.readinessPath }}
+              port: {{ .Values.app.servicePort }}
+          env:
+            - name: HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: host
+                  name: {{ .Release.Name }}
+            - name: PORT_SRC
+              valueFrom:
+                configMapKeyRef:
+                  key: portsrc
+                  name: {{ .Release.Name }}
+            - name: JAGER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: jagerHost
+                  name: {{ .Release.Name }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: db_username
+                  name: adontsov-secret-src
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: db_password
+                  name: adontsov-secret-src
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: db_host
+                  name: adontsov-secret-src
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: db_port
+                  name: adontsov-secret-src
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: db_name
+                  name: adontsov-secret-src
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

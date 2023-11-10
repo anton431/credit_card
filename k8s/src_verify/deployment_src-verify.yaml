@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: adontsov-verify-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adontsov-shift-verify
+  template:
+    metadata:
+      name: adontsov-pod
+      labels:
+        app: adontsov-shift-verify
+    spec:
+      containers:
+        - name: adontosov-container-verify
+          image: registry.gitlab.com/shift-python/y2023/homeworks/doncov-a/week8-task1/src_verify:latest
+          ports:
+            - containerPort: 24204
+          resources:
+            limits:
+              cpu: 500m
+              memory: "4000Mi"
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 24204
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 3
+            successThreshold: 2
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 24204
+            failureThreshold: 2
+            initialDelaySeconds: 15
+            periodSeconds: 1
+            successThreshold: 1
+          env:
+            - name: HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: host
+                  name: adontsov-configmap-src-verify
+            - name: PORT_SRC
+              valueFrom:
+                configMapKeyRef:
+                  key: portsrc
+                  name: adontsov-configmap-src-verify
+            - name: KAFKA_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_host
+                  name: adontsov-secret-src-verify
+            - name: KAFKA_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_port
+                  name: adontsov-secret-src-verify
+            - name: SRC_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: src_host
+                  name: adontsov-secret-src-verify

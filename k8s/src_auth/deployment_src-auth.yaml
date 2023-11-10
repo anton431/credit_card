@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: adontsov-auth-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adontsov-shift-auth
+  template:
+    metadata:
+      name: adontsov-pod
+      labels:
+        app: adontsov-shift-auth
+    spec:
+      containers:
+        - name: adontosov-container-auth
+          image: registry.gitlab.com/shift-python/y2023/homeworks/doncov-a/week8-task1/src_auth:latest
+          ports:
+            - containerPort: 24004
+          resources:
+            limits:
+              cpu: 200m
+              memory: "400Mi"
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 24004
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 3
+            successThreshold: 2
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 24004
+            failureThreshold: 2
+            initialDelaySeconds: 15
+            periodSeconds: 1
+            successThreshold: 1
+          env:
+            - name: HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: host
+                  name: adontsov-configmap-src-auth
+            - name: PORT_SRC
+              valueFrom:
+                configMapKeyRef:
+                  key: portsrc
+                  name: adontsov-configmap-src-auth
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: db_username
+                  name: adontsov-secret-src-auth
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: db_password
+                  name: adontsov-secret-src-auth
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: db_host
+                  name: adontsov-secret-src-auth
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: db_port
+                  name: adontsov-secret-src-auth
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: db_name
+                  name: adontsov-secret-src-auth
+            - name: KAFKA_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_host
+                  name: adontsov-secret-src-auth
+            - name: KAFKA_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_port
+                  name: adontsov-secret-src-auth
+            - name: SRC_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: src_host
+                  name: adontsov-secret-src-auth
+            - name: SRC_VERIFY_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: src_verify_host
+                  name: adontsov-secret-src-auth

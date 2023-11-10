@@ -1,0 +1,12 @@
+app:
+  servicePort: 24004
+  resources:
+    limits:
+      cpu: 100m
+      memory: "300Mi"
+  probes:
+    livenessPath: /live
+    readinessPath: /ready
+  data:
+    host: "127.0.0.1"
+    portsrc: "24004"

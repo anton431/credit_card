@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adontsov-configmap-src-verify
+data:
+  host: "0.0.0.0"
+  portsrc: "24204"
